@@ -1,0 +1,70 @@
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+public class UserProducerTest {
+
+    @Mock
+    private RabbitTemplate rabbitTemplate;
+
+    private UserProducer userProducer;
+
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+        userProducer = new UserProducer(rabbitTemplate);
+    }
+
+    @Test
+    public void testPublishMessageEmail_ThrowsIllegalArgumentExceptionWhenUserModelIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            userProducer.publishMessageEmail(null);
+        });
+    }
+
+    @Test
+    public void testPublishMessageEmail_ThrowsIllegalArgumentExceptionWhenUserModelPropertiesAreNull() {
+        UserModel userModel = new UserModel();
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            userProducer.publishMessageEmail(userModel);
+        });
+    }
+
+    @Test
+    public void testPublishMessageEmail_ConvertsAndSendsEmailDtoSuccessfully() {
+        UserModel userModel = new UserModel();
+        userModel.setUserId(1L);
+        userModel.setName("John Doe");
+        userModel.setEmail("john@example.com");
+
+        EmailDto expectedEmailDto = new EmailDto();
+        expectedEmailDto.setUserId(userModel.getUserId());
+        expectedEmailDto.setSubject("Cadastro realizado com sucesso!");
+        expectedEmailDto.setText(userModel.getName() + ", seja bem vindo()!");
+
+        userProducer.publishMessageEmail(userModel);
+
+        verify(rabbitTemplate, times(1)).convertAndSend("", userProducer.getRoutingKey(), expectedEmailDto);
+    }
+
+    @Test
+    public void testPublishMessageEmail_CatchesAmqpExceptionAndPrintsError() {
+        UserModel userModel = new UserModel();
+        userModel.setUserId(1L);
+        userModel.setName("John Doe");
+        userModel.setEmail("john@example.com");
+
+        doThrow(AmqpException.class).when(rabbitTemplate).convertAndSend("", userProducer.getRoutingKey(), any(EmailDto.class));
+
+        assertDoesNotThrow(() -> {
+            userProducer.publishMessageEmail(userModel);
+        });
+    }
+}

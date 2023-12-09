@@ -1,0 +1,32 @@
+import org.junit.jupiter.api.*;
+import org.mockito.*;
+
+public class UserServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private UserProducer userProducer;
+
+    @InjectMocks
+    private UserService userService;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        userService = new UserService(userRepository, userProducer);
+    }
+
+    @Test
+    void save_shouldSaveUserAndPublishMessage() {
+        UserModel userModel = new UserModel();
+        Mockito.when(userRepository.save(userModel)).thenReturn(userModel);
+
+        UserModel savedUser = userService.save(userModel);
+
+        Mockito.verify(userRepository, Mockito.times(1)).save(userModel);
+        Mockito.verify(userProducer, Mockito.times(1)).publishMessageEmail(userModel);
+        Assertions.assertEquals(userModel, savedUser);
+    }
+}
