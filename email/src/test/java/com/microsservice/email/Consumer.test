@@ -1,0 +1,36 @@
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.BeanUtils;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+
+@SpringJUnitConfig
+@SpringBootTest
+@TestPropertySource(properties = "broker.queue.email.name=test-queue")
+public class EmailConsumerTests {
+    
+    @MockBean
+    private EmailModelRepository emailModelRepository; 
+    
+    @MockBean
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private EmailConsumer emailConsumer;
+
+    @Test
+    public void testListenEmailQueue() {
+        EmailRecordDto emailRecordDto = new EmailRecordDto();
+        emailRecordDto.setSubject("Test Subject");
+        emailRecordDto.setBody("Test Body");
+
+        Mockito.doNothing().when(emailModelRepository).save(Mockito.any(EmailModel.class));
+
+        emailConsumer.listenEmailQueue(emailRecordDto);
+
+        Mockito.verify(emailModelRepository).save(Mockito.any(EmailModel.class));
+        Mockito.verify(rabbitTemplate).convertAndSend(Mockito.eq("test-queue"), Mockito.any(EmailModel.class));
+    }
+}

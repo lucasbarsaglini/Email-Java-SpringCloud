@@ -1,0 +1,76 @@
+package services;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
+
+import java.time.LocalDateTime;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.mail.MailException;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+
+import enums.StatusEmail;
+import models.EmailModel;
+import repositories.EmailRepository;
+
+@RunWith(MockitoJUnitRunner.class)
+public class EmailServiceTest {
+
+	@Mock
+	private EmailRepository emailRepository;
+
+	@Mock
+	private JavaMailSender emailSender;
+
+	@InjectMocks
+	private EmailService emailService;
+
+	@Before
+	public void setup() {
+	}
+
+	@Test
+	public void testSendEmail_Success() {
+		EmailModel emailModel = new EmailModel();
+		emailModel.setEmailTo("recipient@example.com");
+		emailModel.setSubject("Test Email");
+		emailModel.setText("This is a test email");
+
+		SimpleMailMessage expectedMessage = new SimpleMailMessage();
+		expectedMessage.setTo(emailModel.getEmailTo());
+		expectedMessage.setSubject(emailModel.getSubject());
+		expectedMessage.setText(emailModel.getText());
+
+		when(emailRepository.save(any(EmailModel.class))).thenReturn(emailModel);
+
+		EmailModel result = emailService.sendEmail(emailModel);
+
+		assertEquals(StatusEmail.SENT, result.getStatusEmail());
+		verify(emailSender, times(1)).send(expectedMessage);
+		verify(emailRepository, times(1)).save(emailModel);
+	}
+
+	@Test
+	public void testSendEmail_Error() {
+		EmailModel emailModel = new EmailModel();
+		emailModel.setEmailTo("recipient@example.com");
+		emailModel.setSubject("Test Email");
+		emailModel.setText("This is a test email");
+
+		when(emailRepository.save(any(EmailModel.class))).thenReturn(emailModel);
+		doThrow(new MailException("Failed to send email"))
+			.when(emailSender).send(any(SimpleMailMessage.class));
+
+		EmailModel result = emailService.sendEmail(emailModel);
+
+		assertEquals(StatusEmail.ERROR, result.getStatusEmail());
+		verify(emailSender, times(1)).send(any(SimpleMailMessage.class));
+		verify(emailRepository, times(1)).save(emailModel);
+	}
+}
