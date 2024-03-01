@@ -13,7 +13,7 @@
 
 # Descrição do projeto
 
-Este é um sistema de microsserviços para o envio de e-mails, implementando a comunicação assincrona entre o microserviço usuario e o microserviço email. Onde cada componente é responsável por uma função específica, garantindo a eficiência e a especialização na execução de tarefas.   
+Este projeto é um sistema de microsserviços projetado para facilitar o envio de e-mails de forma assíncrona usando RabbitMQ e Java. Ele emprega uma arquitetura de microsserviços para garantir eficiência e especialização nas tarefas. Os microsserviços "usuário" e "e-mail" comunicam-se de forma assíncrona, cada um executando uma função específica para garantir um fluxo de trabalho fluido e otimizado. O uso do RabbitMQ permite uma comunicação robusta e escalável entre os diferentes componentes, enquanto o Java oferece uma base sólida para o desenvolvimento e execução dos microsserviços. Essa abordagem modular permite uma fácil manutenção e escalabilidade do sistema, além de facilitar a integração com outras partes do ecossistema de software.   
 
 # Funcionalidades e Demonstração da Aplicação
 <img src="https://github.com/lucasbarsaglini/Email-Java-SpringCloud/assets/100448147/9e4cc827-b083-4bdf-bc77-25f9c186311f">
